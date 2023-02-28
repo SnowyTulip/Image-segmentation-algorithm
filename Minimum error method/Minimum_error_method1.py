@@ -2,7 +2,8 @@ import numpy as np
 from tqdm import tqdm 
 import math
 import cv2
-
+#使用原文中简化的公式进行
+#Kittler_1986_Minimum error thresholding 公式(15)
 #code
 def get_hist(img_gray,l = 8):
     '''

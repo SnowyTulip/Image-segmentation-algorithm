@@ -16,7 +16,7 @@ def save_hist(img_gray,k,save_dir):
     '''to return a hist of img_gray and tick k in that'''
     plt.hist(img_gray.ravel(), 256, [0, 256])
     hist, bins = np.histogram(img_gray.ravel(), bins=256, range=(0, 256))
-    hist = [math.log(b,base = 2) for b in hist]                #使用log放缩直方图
+    # hist = [math.log(b) for b in hist]                #使用log放缩直方图
     #正则化 begin
     #options = ['l1', 'l2', 'max'] 正则化的选项
     # hist = normalize(hist.reshape(1,-1) , norm = 'l2').reshape((-1))
@@ -30,8 +30,8 @@ def save_hist(img_gray,k,save_dir):
     plt.close()
 
 if __name__ == "__main__":
-    path_input  = "input"
-    path_output = "output"
+    path_input  = "Max entropy method/input"
+    path_output = "Max entropy method/output"
     input_folders = os.listdir(path_input)
     threshold_dict = {}
     for folder_name in input_folders:

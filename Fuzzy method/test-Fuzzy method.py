@@ -31,8 +31,8 @@ def save_hist(img_gray,k,save_dir):
     plt.close()
 
 if __name__ == "__main__":
-    path_input  = "input"
-    path_output = "output"
+    path_input  = "Fuzzy method/input"
+    path_output = "Fuzzy method/output"
     input_folders = os.listdir(path_input)
     threshold_dict = {}
     for folder_name in input_folders:
