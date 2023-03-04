@@ -116,7 +116,9 @@ def KI1986(img_gray,l = 8):
     p = get_hist(img_gray,l)
     pixels = get_pixels(img_gray,l)
     A_star_list     = [sum(pixels[0:k+1])/sum(pixels) for k in range(2**l)]
+
     Sub_A_star_list = [1 - A_star for A_star in A_star_list]
+    
     std_dev1_list,std_dev2_list  = GetValues(p,A_star_list,Sub_A_star_list,l)
     J_list = Get_J_List(std_dev1_list,std_dev2_list,A_star_list,Sub_A_star_list,l)
     k = np.argmin(J_list)
