@@ -129,7 +129,7 @@ def KI1986(img_gray,l = 8):
 
 if __name__ == "__main__":
     # img_concat_RGB_and_Binary(1)
-    path = r"Minimum error method\asd.png"
+    path = r"Sahli method\SS[9@OG%5WF@9B01N@AX(6P.png"
     img = cv2.imread(path)
     # img = cv2.resize(img,(400,400))
     gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)

@@ -85,9 +85,9 @@ def KSW1985(img_gray,l = 8):
 
 if __name__ == "__main__":
     # img_concat_RGB_and_Binary(1)
-    path = r"input\Li et al 2021\20190918-163253-925.bmp"
+    path = r"Sahli method\SS[9@OG%5WF@9B01N@AX(6P.png"
     img = cv2.imread(path)
-    img = cv2.resize(img,(700,400))
+    # img = cv2.resize(img,(700,400))
     gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ret,b  = KSW1985(gray_img)
     cv2.imshow(f"2:{ret}",b)
