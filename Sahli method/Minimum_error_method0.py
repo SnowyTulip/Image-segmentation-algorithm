@@ -29,7 +29,7 @@ def get_pixels(img_gray,l = 8):
 
 def G(u,std_dev,z):
     '''std_dev and u are constant'''
-    res = 1 / (std_dev * 2**0.5 * np.pi) * np.exp(- (z - u)**2 / (2 * std_dev**2))
+    res = 1 / (std_dev * 2**0.5 * np.pi ** 0.5) * np.exp(- (z - u)**2 / (2 * std_dev**2))
     return res
 
 def F(a,b,c,d,z):
@@ -89,7 +89,7 @@ def Sahli_etal_2018(img_gray,l = 8):
     plt.show()
     
     
-    k = 106
+    k = 242
     _ , binary = cv2.threshold(img_gray, k, 2**l - 1, cv2.THRESH_BINARY)
     # binary = cv2.bitwise_not(binary)
     return k,binary
