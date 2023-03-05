@@ -26,83 +26,6 @@ def get_pixels(img_gray,l = 8):
     pixel = hist
     return pixel
 
-# def GetValues(p,A_star_list,Sub_A_star_list,l = 8):
-#     '''
-#     param:   A_star_list[k] is A*(k) 
-#         also Sub_A_star_list[k] is 1 - A*(k)
-#         p is histgram of img_gray
-#     return g1_list,g2_list,std_dev1_list,std_dev2_list
-#     '''
-#     g1_list       = [0 for k in range(2**l)]
-#     g2_list       = [0 for k in range(2**l)]
-#     std_dev1_list = [0 for k in range(2**l)]
-#     std_dev2_list = [0 for k in range(2**l)]
-#     for k in range(0,2**l):
-#         acc1 = 0
-#         if A_star_list[k] != 0:
-#             for g1 in range(k):
-#                 acc1 += g1 * p[g1]/A_star_list[k] 
-#         g1_list[k] = acc1
-
-#         acc2 = 0
-#         if Sub_A_star_list[k] != 0:
-#             for g2 in range(k,2**l):
-#                 acc2 += g2 * p[g2]/Sub_A_star_list[k]  
-#         g2_list[k] = acc2
-#         ### reference
-#         acc3 = 0
-#         if A_star_list[k] != 0:
-#             for g in range(k):
-#                 acc3 += (g - g1_list[k])**2 * p[g1]/A_star_list[k] 
-#         std_dev1_list[k] = acc3
-#         acc4 = 0
-#         if Sub_A_star_list[k] != 0:
-#             for g in range(k,2**l):
-#                 acc4 += (g - g2_list[k])**2 * p[g2]/Sub_A_star_list[k] 
-#         std_dev2_list[k] = acc4
-#     return g1_list,g2_list,std_dev1_list,std_dev2_list
-
-
-# def Get_G(u):
-#     '''
-#     '''
-#     if u == 1:
-#         res = 0
-#     else:
-#         res = -u * math.log(u) - (1 - u) * math.log(1 - u)
-#     return res
-
-# def Get_J_List(p,g1_list,g2_list,std_dev1_list,std_dev2_list,A_star_list,Sub_A_star_list,l):
-#     '''
-#     Reference paper[1] 30
-#     '''
-#     arg_pack = (g1_list,g2_list,std_dev1_list,std_dev2_list,A_star_list,Sub_A_star_list)
-#     J_list = [0 for _ in range(2**l)]
-#     for k in range(2**l):
-#         acc = 0
-#         for g in range(2**l):
-#             acc += p[g] * E_g_k(*arg_pack,g,k)
-#         J_list[k] = acc
-#     return J_list
-
-
-
-
-
-
-# def E_g_k(g1_list,g2_list,std_dev1_list,std_dev2_list,A_star_list,Sub_A_star_list,g,k):
-#     '''
-#     Reference paper[1] 29
-#     Get E(g,k) in paper[1] 29
-#     '''
-#     g_mean   = g1_list[k]       if g <= k else g2_list[k]
-#     std_dev  = std_dev1_list[k] if g <= k else std_dev2_list[k]
-#     A_star   = A_star_list[k]   if g <= k else Sub_A_star_list[k]
-#     if std_dev == 0:
-#         res = 1e10
-#     else:
-#         res = (g - g_mean)**2/ std_dev - 2 * math.log(A_star) + 2 * math.log(std_dev ** 0.5)
-#     return res
 
 def G(u,std_dev,z):
     '''std_dev and u are constant'''
@@ -147,11 +70,11 @@ def Sahli_etal_2018(img_gray,l = 8):
     ''' u:[0,255], std_dev:[0:255],a:[0:np.inf],b:[0:255],c:[0:255],d:[-np.inf:+np.inf] ,C1:[0:1]'''
     param_bounds=([ 0,0,0,0,0,-np.inf,0],[255,255,np.inf,255,255,np.inf,1])
 
-    popt, pcov = curve_fit(h, xdata, ydata,bounds=param_bounds)
+    popt, pcov = curve_fit(h, xdata, ydata,bounds=param_bounds,maxfev = 10000)
     
     for i,ch in enumerate( ['u','std_dev', 'a','b','c','d' ,'C1']) :
         print(f"{ch}: {popt[i]}")
-    # plt.plot(xdata, ydata , "b")       #直方图
+    
     u,std_dev,a,b,c,d ,C1 = popt
     C2 = 1 - C1
     y1  = [h(z, *popt) for z in xdata]  #直方图拟合后的y值
@@ -160,6 +83,7 @@ def Sahli_etal_2018(img_gray,l = 8):
     plt.plot(xdata,y_G,"g")              #绘制前景图线
     plt.plot(xdata,y_F,"black")        #绘制背景图线
     plt.plot(xdata, y1, 'r')           #直方图拟合的图线
+    plt.plot(xdata, ydata , "b")     #原始直方图
     plt.legend(labels=["target","background","histgram"],loc="lower right",fontsize=10)
     plt.grid()
     plt.show()
@@ -167,15 +91,16 @@ def Sahli_etal_2018(img_gray,l = 8):
     
     k = 106
     _ , binary = cv2.threshold(img_gray, k, 2**l - 1, cv2.THRESH_BINARY)
+    # binary = cv2.bitwise_not(binary)
     return k,binary
 
 
 
 if __name__ == "__main__":
     # img_concat_RGB_and_Binary(1)
-    path = r"Sahli method\input\Sahli et a. 2018\sahli.png"
+    path = r"Sahli method\asd.png"
     img = cv2.imread(path)
-    img = cv2.resize(img,(400,400))
+    # img = cv2.resize(img,(400,400))
     gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ret,b  = Sahli_etal_2018(gray_img)
     cv2.imshow(f"2:{ret}",b)
