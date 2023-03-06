@@ -26,6 +26,20 @@ def get_pixels(img_gray,l = 8):
     pixel = hist
     return pixel
 
+def get_min_val(list1,list2):
+    '''获得list1与list2组成的图像交点的左边的交点
+    要求第一个参数必须是背景图像，第二个才是前景，顺序不能乱
+    '''
+    diff = list(np.array(list1) -np.array(list2)) 
+    res = 0
+    for index,val in enumerate(diff):
+        if val >= 0:
+            res = index
+            break
+    return res
+    
+
+
 
 def G(u,std_dev,z):
     '''std_dev and u are constant'''
@@ -50,13 +64,13 @@ def h(z, u,std_dev, a,b,c,d ,C1):
     return res 
 
 
-
-def Sahli_etal_2018(img_gray,l = 8):
+def Sahli_etal_2018(img_gray,l = 8,savePath=None):
     '''
     method: Minimum_error_method - Sahli_etal_2018
     param : img_gray mat 
             l is the bit of the image 
     return: k(threshold) and binary_image_mat
+    this function is used to save the histogram of the img
     '''
     # Reference:paper [1] 
     # Begin  ###################################################
@@ -67,13 +81,14 @@ def Sahli_etal_2018(img_gray,l = 8):
     # Sub_A_star_list = [1 - A_star for A_star in A_star_list]
     ydata = p.copy() # h(z) is ydata
     xdata = [i for i in range(len(ydata))]
+    #range of parameters
     ''' u:[0,255], std_dev:[0:255],a:[0:np.inf],b:[0:255],c:[0:255],d:[-np.inf:+np.inf] ,C1:[0:1]'''
     param_bounds=([ 0,0,0,0,0,-np.inf,0],[255,255,np.inf,255,255,np.inf,1])
-
+    # Fit histogram
     popt, pcov = curve_fit(h, xdata, ydata,bounds=param_bounds,maxfev = 10000)
     
-    for i,ch in enumerate( ['u','std_dev', 'a','b','c','d' ,'C1']) :
-        print(f"{ch}: {popt[i]}")
+    # for i,ch in enumerate( ['u','std_dev', 'a','b','c','d' ,'C1']) :
+    #     print(f"{ch}: {popt[i]}")
     
     u,std_dev,a,b,c,d ,C1 = popt
     C2 = 1 - C1
@@ -84,24 +99,29 @@ def Sahli_etal_2018(img_gray,l = 8):
     plt.plot(xdata,y_F,"black")        #绘制背景图线
     plt.plot(xdata, y1, 'r')           #直方图拟合的图线
     plt.plot(xdata, ydata , "b")     #原始直方图
-    plt.legend(labels=["target","background","histgram"],loc="lower right",fontsize=10)
+    plt.legend(labels=["target","background","histgram","origin hist"],loc="lower right",fontsize=10)
     plt.grid()
-    plt.show()
-    k = np.argmin(list(map(abs,np.array(y_G) -np.array(y_F))))
+    list(map(abs,np.array(y_G) -np.array(y_F))) 
+    k = get_min_val(y_G,y_F)
+    plt.axvline(x = k)
+    # plt.show()
+    # 保存一下绘制的直方图
+    if savePath != None:
+        plt.savefig(savePath)
+    plt.close()
     _ , binary = cv2.threshold(img_gray, k, 2**l - 1, cv2.THRESH_BINARY)
     # binary = cv2.bitwise_not(binary)
     return k,binary
 
 
-
 if __name__ == "__main__":
     # img_concat_RGB_and_Binary(1)
-    path = r"Sahli method\asd.png"
+    path = r"Sahli method\test.png"
     img = cv2.imread(path)
     # img = cv2.resize(img,(400,400))
     gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ret,b  = Sahli_etal_2018(gray_img)
-    cv2.imshow(f"2:{ret}",b)
+    cv2.imshow(f"thresh:{ret}",b)
     print(f"thresh:{ret}")
     cv2.imshow("o",img)
     cv2.waitKey(0)
