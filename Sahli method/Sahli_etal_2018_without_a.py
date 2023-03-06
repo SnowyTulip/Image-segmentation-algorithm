@@ -27,26 +27,25 @@ def get_pixels(img_gray,l = 8):
     return pixel
 
 
-def G(u,std_dev,z):
+def P1(u1,std_dev1,g):
     '''std_dev and u are constant'''
-    res = 1 / (std_dev * 2**0.5 * np.pi ** 0.5) * np.exp(- (z - u)**2 / (2 * std_dev**2))
+    res = 1 / (std_dev1 * 2**0.5 * np.pi ** 0.5) * np.exp(- (g - u1)**2 / (2 * std_dev1**2))
     return res
 
-def F(a,b,c,d,z):
+def P2(u2,std_dev2,d,g):
     '''a b c d are constant
     "a" is a normalization parameter
     '''
-    res = a * np.exp( ((z - b) / c)**2 ) * np.log(1 + np.exp(0.1 *(z - d)))
+    # res = a * np.exp( ((z - b) / c)**2 ) * np.log(1 + np.exp(0.1 *(z - d)))
+    res = 1 / (std_dev2 * 2**0.5 * np.pi ** 0.5) * np.exp(- (g - u2)**2 / (2 * std_dev2**2)) * np.log(1 + np.exp(0.1 * (g - d)))
     return res
 
-def h(z, u,std_dev, a,b,c,d ,C1):
-    '''z is var 
+def h(g,u1,std_dev1, u2,std_dev2,d,A_star):
+    ''' g is var 
         Other variables are constants that need to be estimated.
-        C1 is A*
-        C2 is no need to estimate ,C2 is 1 - A*
+        And a is 
     '''
-    C2 = 1 - C1
-    res = C1 * G(u,std_dev,z) + C2 * F(a,b,c,d,z)
+    res = A_star * P1(u1,std_dev1,g) + (1 - A_star) * P2(u2,std_dev2,d,g)
     return res 
 
 
@@ -67,31 +66,30 @@ def Sahli_etal_2018(img_gray,l = 8):
     # Sub_A_star_list = [1 - A_star for A_star in A_star_list]
     ydata = p.copy() # h(z) is ydata
     xdata = [i for i in range(len(ydata))]
-    ''' u:[0,255], std_dev:[0:255],a:[0:np.inf],b:[0:255],c:[0:255],d:[-np.inf:+np.inf] ,C1:[0:1]'''
-    param_bounds=([ 0,0,0,0,0,-np.inf,0],[255,255,np.inf,255,255,np.inf,1])
+    '''  u1:[0,255],std_dev1:[0,255],u2:[0:255],std_dev2:[0,255],d:[-np.inf:+np.inf],A_star:[0:1]'''
+    param_bounds=([ 0,0,0,0,-np.inf,0],[255,255,255,255,np.inf,1])
 
     popt, pcov = curve_fit(h, xdata, ydata,bounds=param_bounds,maxfev = 10000)
     
-    for i,ch in enumerate( ['u','std_dev', 'a','b','c','d' ,'C1']) :
+    for i,ch in enumerate( ['u1','std_dev1', 'u2','std_dev2','d','A_star']) :
         print(f"{ch}: {popt[i]}")
     
-    u,std_dev,a,b,c,d ,C1 = popt
-    C2 = 1 - C1
+    u1,std_dev1,u2,std_dev2,d,A_star = popt
     y1  = [h(z, *popt) for z in xdata]  #直方图拟合后的y值
-    y_G = [G(u,std_dev,z)*C1 for z in xdata]  #前景的图线
-    y_F = [F(a,b,c,d,z)*C2 for z in xdata]  #背景的图线
-    plt.plot(xdata,y_G,"g")              #绘制前景图线
-    plt.plot(xdata,y_F,"black")        #绘制背景图线
+    y_p1 = [P1(u1,std_dev1,g) * A_star for g in xdata]  #前景的图线
+    y_p2 = [P2(u2,std_dev2,d,g)*(1 - A_star) for g in xdata]  #背景的图线
+    plt.plot(xdata,y_p1,"g")              #绘制前景图线
+    plt.plot(xdata,y_p2,"black")        #绘制背景图线
     plt.plot(xdata, y1, 'r')           #直方图拟合的图线
     plt.plot(xdata, ydata , "b")     #原始直方图
     plt.legend(labels=["target","background","histgram"],loc="lower right",fontsize=10)
     plt.grid()
-    plt.show()
-    k = np.argmin(list(map(abs,np.array(y_G) -np.array(y_F))))
+    plt.show()    
+    #寻找最接近的P1和P2的点作为相交点
+    k = np.argmin(list(map(abs,np.array(y_p1) -np.array(y_p2))))
     _ , binary = cv2.threshold(img_gray, k, 2**l - 1, cv2.THRESH_BINARY)
     # binary = cv2.bitwise_not(binary)
     return k,binary
-
 
 
 if __name__ == "__main__":
